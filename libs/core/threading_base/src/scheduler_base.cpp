@@ -36,7 +36,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 namespace hpx { namespace threads { namespace policies {
     scheduler_base::scheduler_base(std::size_t num_threads,
-        char const* description, thread_queue_init_parameters thread_queue_init,
+        char const* description,
+        thread_queue_init_parameters const& thread_queue_init,
         scheduler_mode mode)
       : suspend_mtxs_(num_threads)
       , suspend_conds_(num_threads)
@@ -151,8 +152,7 @@ namespace hpx { namespace threads { namespace policies {
     }
 
     std::size_t scheduler_base::select_active_pu(
-        std::unique_lock<pu_mutex_type>& l, std::size_t num_thread,
-        bool allow_fallback)
+        std::size_t num_thread, bool allow_fallback)
     {
         if (mode_.data_.load(std::memory_order_relaxed) &
             threads::policies::scheduler_mode::enable_elasticity)
@@ -166,7 +166,7 @@ namespace hpx { namespace threads { namespace policies {
                 // threads are available for scheduling.
                 auto max_allowed_state = hpx::state::suspended;
 
-                hpx::util::yield_while([this, states_size, &l, &num_thread,
+                hpx::util::yield_while([this, states_size, &num_thread,
                                            &max_allowed_state]() {
                     std::size_t num_allowed_threads = 0;
 
@@ -175,18 +175,19 @@ namespace hpx { namespace threads { namespace policies {
                         std::size_t num_thread_local =
                             (num_thread + offset) % states_size;
 
-                        l = std::unique_lock<pu_mutex_type>(
-                            pu_mtxs_[num_thread_local], std::try_to_lock);
-
-                        if (l.owns_lock())
                         {
-                            if (states_[num_thread_local] <= max_allowed_state)
-                            {
-                                num_thread = num_thread_local;
-                                return false;
-                            }
+                            std::unique_lock<pu_mutex_type> l(
+                                pu_mtxs_[num_thread_local], std::try_to_lock);
 
-                            l.unlock();
+                            if (l.owns_lock())
+                            {
+                                if (states_[num_thread_local] <=
+                                    max_allowed_state)
+                                {
+                                    num_thread = num_thread_local;
+                                    return false;
+                                }
+                            }
                         }
 
                         if (states_[num_thread_local] <= max_allowed_state)
@@ -228,7 +229,7 @@ namespace hpx { namespace threads { namespace policies {
                 std::size_t num_thread_local =
                     (num_thread + offset) % states_size;
 
-                l = std::unique_lock<pu_mutex_type>(
+                std::unique_lock<pu_mutex_type> l(
                     pu_mtxs_[num_thread_local], std::try_to_lock);
 
                 if (l.owns_lock() &&
@@ -317,35 +318,35 @@ namespace hpx { namespace threads { namespace policies {
     }
 
     // get/set scheduler mode
-    void scheduler_base::set_scheduler_mode(scheduler_mode mode)
+    void scheduler_base::set_scheduler_mode(scheduler_mode mode) noexcept
     {
         // distribute the same value across all cores
         mode_.data_.store(mode, std::memory_order_release);
         do_some_work(std::size_t(-1));
     }
 
-    void scheduler_base::add_scheduler_mode(scheduler_mode mode)
+    void scheduler_base::add_scheduler_mode(scheduler_mode mode) noexcept
     {
         // distribute the same value across all cores
-        mode = scheduler_mode(get_scheduler_mode() | mode);
-        set_scheduler_mode(mode);
+        set_scheduler_mode(get_scheduler_mode() | mode);
     }
 
-    void scheduler_base::remove_scheduler_mode(scheduler_mode mode)
+    void scheduler_base::remove_scheduler_mode(scheduler_mode mode) noexcept
     {
         mode = scheduler_mode(get_scheduler_mode() & ~mode);
         set_scheduler_mode(mode);
     }
 
     void scheduler_base::add_remove_scheduler_mode(
-        scheduler_mode to_add_mode, scheduler_mode to_remove_mode)
+        scheduler_mode to_add_mode, scheduler_mode to_remove_mode) noexcept
     {
         scheduler_mode mode = scheduler_mode(
             (get_scheduler_mode() | to_add_mode) & ~to_remove_mode);
         set_scheduler_mode(mode);
     }
 
-    void scheduler_base::update_scheduler_mode(scheduler_mode mode, bool set)
+    void scheduler_base::update_scheduler_mode(
+        scheduler_mode mode, bool set) noexcept
     {
         if (set)
         {
@@ -358,17 +359,17 @@ namespace hpx { namespace threads { namespace policies {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    std::int64_t scheduler_base::get_background_thread_count()
+    std::int64_t scheduler_base::get_background_thread_count() noexcept
     {
         return background_thread_count_;
     }
 
-    void scheduler_base::increment_background_thread_count()
+    void scheduler_base::increment_background_thread_count() noexcept
     {
         ++background_thread_count_;
     }
 
-    void scheduler_base::decrement_background_thread_count()
+    void scheduler_base::decrement_background_thread_count() noexcept
     {
         --background_thread_count_;
     }

@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2021 Hartmut Kaiser
+//  Copyright (c) 2007-2022 Hartmut Kaiser
 //
 //  SPDX-License-Identifier: BSL-1.0
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -16,6 +16,7 @@
 #include <hpx/threading_base/scheduler_base.hpp>
 #include <hpx/threading_base/scheduler_state.hpp>
 #include <hpx/threading_base/thread_data.hpp>
+#include <hpx/type_support/unused.hpp>
 
 #if defined(HPX_HAVE_BACKGROUND_THREAD_COUNTERS) &&                            \
     defined(HPX_HAVE_THREAD_IDLE_RATES)
@@ -69,7 +70,8 @@ namespace hpx { namespace threads { namespace detail {
     class switch_status
     {
     public:
-        switch_status(thread_id_ref_type const& t, thread_state prev_state)
+        switch_status(
+            thread_id_ref_type const& t, thread_state prev_state) noexcept
           : thread_(t)
           , prev_state_(prev_state)
           , next_thread_id_(nullptr)
@@ -86,14 +88,14 @@ namespace hpx { namespace threads { namespace detail {
             }
         }
 
-        bool is_valid() const
+        constexpr bool is_valid() const noexcept
         {
             return need_restore_state_;
         }
 
         // allow to change the state the thread will be switched to after
         // execution
-        thread_state operator=(thread_result_type&& new_state)
+        thread_state operator=(thread_result_type&& new_state) noexcept
         {
             prev_state_ = thread_state(
                 new_state.first, prev_state_.state_ex(), prev_state_.tag() + 1);
@@ -104,7 +106,7 @@ namespace hpx { namespace threads { namespace detail {
         // Get the state this thread was in before execution (usually pending),
         // this helps making sure no other worker-thread is started to execute this
         // HPX-thread in the meantime.
-        thread_schedule_state get_previous() const
+        thread_schedule_state get_previous() const noexcept
         {
             return prev_state_.state();
         }
@@ -113,7 +115,7 @@ namespace hpx { namespace threads { namespace detail {
         // original state has not been changed since we started executing this
         // thread. The function returns true if the state has been set, false
         // otherwise.
-        bool store_state(thread_state& newstate)
+        bool store_state(thread_state& newstate) noexcept
         {
             disable_restore();
 
@@ -127,17 +129,17 @@ namespace hpx { namespace threads { namespace detail {
         }
 
         // disable default handling in destructor
-        void disable_restore()
+        void disable_restore() noexcept
         {
             need_restore_state_ = false;
         }
 
-        thread_id_ref_type const& get_next_thread() const
+        thread_id_ref_type const& get_next_thread() const noexcept
         {
             return next_thread_id_;
         }
 
-        thread_id_ref_type move_next_thread()
+        thread_id_ref_type move_next_thread() noexcept
         {
             return HPX_MOVE(next_thread_id_);
         }
@@ -154,7 +156,7 @@ namespace hpx { namespace threads { namespace detail {
     {
     public:
         switch_status_background(
-            thread_id_ref_type const& t, thread_state prev_state)
+            thread_id_ref_type const& t, thread_state prev_state) noexcept
           : thread_(t)
           , prev_state_(prev_state)
           , next_thread_id_(nullptr)
@@ -172,14 +174,14 @@ namespace hpx { namespace threads { namespace detail {
             }
         }
 
-        bool is_valid() const
+        constexpr bool is_valid() const noexcept
         {
             return need_restore_state_;
         }
 
         // allow to change the state the thread will be switched to after
         // execution
-        thread_state operator=(thread_result_type&& new_state)
+        thread_state operator=(thread_result_type&& new_state) noexcept
         {
             prev_state_ = thread_state(
                 new_state.first, prev_state_.state_ex(), prev_state_.tag() + 1);
@@ -190,7 +192,7 @@ namespace hpx { namespace threads { namespace detail {
         // Get the state this thread was in before execution (usually pending),
         // this helps making sure no other worker-thread is started to execute this
         // HPX-thread in the meantime.
-        thread_schedule_state get_previous() const
+        thread_schedule_state get_previous() const noexcept
         {
             return prev_state_.state();
         }
@@ -199,7 +201,7 @@ namespace hpx { namespace threads { namespace detail {
         // original state has not been changed since we started executing this
         // thread. The function returns true if the state has been set, false
         // otherwise.
-        bool store_state(thread_state& newstate)
+        bool store_state(thread_state& newstate) noexcept
         {
             disable_restore();
             if (get_thread_id_data(thread_)->restore_state(prev_state_,
@@ -213,17 +215,17 @@ namespace hpx { namespace threads { namespace detail {
         }
 
         // disable default handling in destructor
-        void disable_restore()
+        void disable_restore() noexcept
         {
             need_restore_state_ = false;
         }
 
-        thread_id_ref_type const& get_next_thread() const
+        thread_id_ref_type const& get_next_thread() const noexcept
         {
             return next_thread_id_;
         }
 
-        thread_id_ref_type move_next_thread()
+        thread_id_ref_type move_next_thread() noexcept
         {
             return HPX_MOVE(next_thread_id_);
         }
@@ -239,18 +241,20 @@ namespace hpx { namespace threads { namespace detail {
 #ifdef HPX_HAVE_THREAD_IDLE_RATES
     struct idle_collect_rate
     {
-        idle_collect_rate(std::int64_t& tfunc_time, std::int64_t& exec_time)
+        idle_collect_rate(
+            std::int64_t& tfunc_time, std::int64_t& exec_time) noexcept
           : start_timestamp_(util::hardware::timestamp())
           , tfunc_time_(tfunc_time)
           , exec_time_(exec_time)
         {
         }
 
-        void collect_exec_time(std::int64_t timestamp)
+        void collect_exec_time(std::int64_t timestamp) noexcept
         {
             exec_time_ += util::hardware::timestamp() - timestamp;
         }
-        void take_snapshot()
+
+        void take_snapshot() noexcept
         {
             if (tfunc_time_ == std::int64_t(-1))
             {
@@ -272,7 +276,7 @@ namespace hpx { namespace threads { namespace detail {
 
     struct exec_time_wrapper
     {
-        exec_time_wrapper(idle_collect_rate& idle_rate)
+        explicit exec_time_wrapper(idle_collect_rate& idle_rate) noexcept
           : timestamp_(util::hardware::timestamp())
           , idle_rate_(idle_rate)
         {
@@ -288,7 +292,8 @@ namespace hpx { namespace threads { namespace detail {
 
     struct tfunc_time_wrapper
     {
-        tfunc_time_wrapper(idle_collect_rate& idle_rate)
+        explicit constexpr tfunc_time_wrapper(
+            idle_collect_rate& idle_rate) noexcept
           : idle_rate_(idle_rate)
         {
         }
@@ -302,24 +307,27 @@ namespace hpx { namespace threads { namespace detail {
 #else
     struct idle_collect_rate
     {
-        idle_collect_rate(std::int64_t&, std::int64_t&) {}
+        explicit constexpr idle_collect_rate(
+            std::int64_t&, std::int64_t&) noexcept
+        {
+        }
     };
 
     struct exec_time_wrapper
     {
-        exec_time_wrapper(idle_collect_rate&) {}
+        explicit constexpr exec_time_wrapper(idle_collect_rate&) noexcept {}
     };
 
     struct tfunc_time_wrapper
     {
-        tfunc_time_wrapper(idle_collect_rate&) {}
+        explicit constexpr tfunc_time_wrapper(idle_collect_rate&) noexcept {}
     };
 #endif
 
     ///////////////////////////////////////////////////////////////////////////
     struct is_active_wrapper
     {
-        is_active_wrapper(bool& is_active)
+        explicit is_active_wrapper(bool& is_active) noexcept
           : is_active_(is_active)
         {
             is_active = true;
@@ -343,7 +351,7 @@ namespace hpx { namespace threads { namespace detail {
             std::int64_t& busy_loop_count, bool& is_active,
             std::int64_t& background_work_duration,
             std::int64_t& background_send_duration,
-            std::int64_t& background_receive_duration)
+            std::int64_t& background_receive_duration) noexcept
           : executed_threads_(executed_threads)
           , executed_thread_phases_(executed_thread_phases)
           , tfunc_time_(tfunc_time)
@@ -374,7 +382,7 @@ namespace hpx { namespace threads { namespace detail {
         scheduling_counters(std::int64_t& executed_threads,
             std::int64_t& executed_thread_phases, std::int64_t& tfunc_time,
             std::int64_t& exec_time, std::int64_t& idle_loop_count,
-            std::int64_t& busy_loop_count, bool& is_active)
+            std::int64_t& busy_loop_count, bool& is_active) noexcept
           : executed_threads_(executed_threads)
           , executed_thread_phases_(executed_thread_phases)
           , tfunc_time_(tfunc_time)
@@ -597,6 +605,7 @@ namespace hpx { namespace threads { namespace detail {
 
         idle_collect_rate idle_rate(counters.tfunc_time_, counters.exec_time_);
         tfunc_time_wrapper tfunc_time_collector(idle_rate);
+        HPX_UNUSED(tfunc_time_collector);
 
         // spin for some time after queues have become empty
         bool may_exit = false;
@@ -651,6 +660,8 @@ namespace hpx { namespace threads { namespace detail {
                         num_thread, running, thrd, enable_stealing)))
             {
                 tfunc_time_wrapper tfunc_time_collector(idle_rate);
+                HPX_UNUSED(tfunc_time_collector);
+
                 HPX_ASSERT(get_thread_id_data(thrd)->get_scheduler_base() ==
                     &scheduler);
 
@@ -683,6 +694,7 @@ namespace hpx { namespace threads { namespace detail {
                                 thread_schedule_state::active);
 
                             tfunc_time_wrapper tfunc_time_collector(idle_rate);
+                            HPX_UNUSED(tfunc_time_collector);
 
                             // thread returns new required state
                             // store the returned state in the thread
@@ -704,7 +716,7 @@ namespace hpx { namespace threads { namespace detail {
                                 // and add to aggregate execution time.
                                 exec_time_wrapper exec_time_collector(
                                     idle_rate);
-
+                                HPX_UNUSED(exec_time_collector);
 #if defined(HPX_HAVE_APEX)
                                 // get the APEX data pointer, in case we are resuming the
                                 // thread and have to restore any leaf timers from
@@ -883,9 +895,10 @@ namespace hpx { namespace threads { namespace detail {
             {
                 ++idle_loop_count;
 
+                next_thrd = nullptr;
                 if (scheduler.SchedulingPolicy::wait_or_add_new(num_thread,
-                        running, idle_loop_count, enable_stealing_staged,
-                        added))
+                        running, idle_loop_count, enable_stealing_staged, added,
+                        &next_thrd))
                 {
                     // Clean up terminated threads before trying to exit
                     bool can_exit = !running &&
@@ -959,6 +972,12 @@ namespace hpx { namespace threads { namespace detail {
                     // speed up idle suspend if no work was stolen
                     idle_loop_count += params.max_idle_loop_count_ / 1024;
                     added = std::size_t(-1);
+                }
+
+                // if stealing yielded a new task, run it first
+                if (next_thrd != nullptr)
+                {
+                    continue;
                 }
 
 #if defined(HPX_HAVE_BACKGROUND_THREAD_COUNTERS) &&                            \

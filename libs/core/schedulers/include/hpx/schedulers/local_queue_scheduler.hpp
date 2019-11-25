@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2017 Hartmut Kaiser
+//  Copyright (c) 2007-2022 Hartmut Kaiser
 //  Copyright (c) 2011      Bryce Lelbach
 //
 //  SPDX-License-Identifier: BSL-1.0
@@ -100,10 +100,9 @@ namespace hpx { namespace threads { namespace policies {
           , queues_(init.num_queues_)
           , curr_queue_(0)
           , affinity_data_(init.affinity_data_)
-          ,
 #if !defined(                                                                  \
     HPX_NATIVE_MIC)    // we know that the MIC has one NUMA domain only)
-          steals_in_numa_domain_()
+          , steals_in_numa_domain_()
           , steals_outside_numa_domain_()
 #endif
           , numa_domain_masks_(
@@ -120,11 +119,11 @@ namespace hpx { namespace threads { namespace policies {
             {
                 HPX_ASSERT(init.num_queues_ != 0);
                 for (std::size_t i = 0; i < init.num_queues_; ++i)
-                    queues_[i] = new thread_queue_type(i, thread_queue_init_);
+                    queues_[i] = new thread_queue_type(thread_queue_init_);
             }
         }
 
-        virtual ~local_queue_scheduler()
+        ~local_queue_scheduler()
         {
             for (std::size_t i = 0; i != queues_.size(); ++i)
                 delete queues_[i];
@@ -308,8 +307,7 @@ namespace hpx { namespace threads { namespace policies {
                 num_thread %= queue_size;
             }
 
-            std::unique_lock<pu_mutex_type> l;
-            num_thread = select_active_pu(l, num_thread);
+            num_thread = select_active_pu(num_thread);
 
             HPX_ASSERT(num_thread < queue_size);
             queues_[num_thread]->create_thread(data, id, ec);
@@ -328,7 +326,7 @@ namespace hpx { namespace threads { namespace policies {
 
         /// Return the next thread to be executed, return false if none is
         /// available
-        virtual bool get_next_thread(std::size_t num_thread, bool running,
+        bool get_next_thread(std::size_t num_thread, bool running,
             threads::thread_id_ref_type& thrd,
             bool /*enable_stealing*/) override
         {
@@ -482,8 +480,7 @@ namespace hpx { namespace threads { namespace policies {
                 num_thread %= queue_size;
             }
 
-            std::unique_lock<pu_mutex_type> l;
-            num_thread = select_active_pu(l, num_thread, allow_fallback);
+            num_thread = select_active_pu(num_thread, allow_fallback);
 
             HPX_ASSERT(get_thread_id_data(thrd)->get_scheduler_base() == this);
 
@@ -525,8 +522,7 @@ namespace hpx { namespace threads { namespace policies {
                 num_thread %= queue_size;
             }
 
-            std::unique_lock<pu_mutex_type> l;
-            num_thread = select_active_pu(l, num_thread, allow_fallback);
+            num_thread = select_active_pu(num_thread, allow_fallback);
 
             HPX_ASSERT(get_thread_id_data(thrd)->get_scheduler_base() == this);
 
@@ -703,9 +699,9 @@ namespace hpx { namespace threads { namespace policies {
         /// manager to allow for maintenance tasks to be executed in the
         /// scheduler. Returns true if the OS thread calling this function
         /// has to be terminated (i.e. no more work has to be done).
-        virtual bool wait_or_add_new(std::size_t num_thread, bool running,
+        bool wait_or_add_new(std::size_t num_thread, bool running,
             std::int64_t& idle_loop_count, bool /* enable_stealing */,
-            std::size_t& added) override
+            std::size_t& added, thread_id_ref_type* = nullptr) override
         {
             std::size_t queues_size = queues_.size();
             HPX_ASSERT(num_thread < queues_.size());
@@ -875,8 +871,7 @@ namespace hpx { namespace threads { namespace policies {
 
             if (nullptr == queues_[num_thread])
             {
-                queues_[num_thread] =
-                    new thread_queue_type(num_thread, thread_queue_init_);
+                queues_[num_thread] = new thread_queue_type(thread_queue_init_);
             }
 
             queues_[num_thread]->on_start_thread(num_thread);

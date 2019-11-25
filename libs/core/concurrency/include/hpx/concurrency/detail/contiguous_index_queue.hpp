@@ -139,7 +139,7 @@ namespace hpx { namespace concurrency { namespace detail {
             {
                 if (expected_range.empty())
                 {
-                    return hpx::nullopt;
+                    return hpx::optional<T>(hpx::nullopt);
                 }
 
                 index = expected_range.first;
@@ -166,7 +166,7 @@ namespace hpx { namespace concurrency { namespace detail {
             {
                 if (expected_range.empty())
                 {
-                    return hpx::nullopt;
+                    return hpx::optional<T>(hpx::nullopt);
                 }
 
                 desired_range = expected_range.decrement_last();

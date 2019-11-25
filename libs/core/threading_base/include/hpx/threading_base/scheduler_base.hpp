@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2019 Hartmut Kaiser
+//  Copyright (c) 2007-2022 Hartmut Kaiser
 //
 //  SPDX-License-Identifier: BSL-1.0
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -61,7 +61,7 @@ namespace hpx { namespace threads { namespace policies {
         typedef std::mutex pu_mutex_type;
 
         scheduler_base(std::size_t num_threads, char const* description = "",
-            thread_queue_init_parameters thread_queue_init = {},
+            thread_queue_init_parameters const& thread_queue_init = {},
             scheduler_mode mode = scheduler_mode::nothing_special);
 
         virtual ~scheduler_base() = default;
@@ -103,7 +103,7 @@ namespace hpx { namespace threads { namespace policies {
         virtual void suspend(std::size_t num_thread);
         virtual void resume(std::size_t num_thread);
 
-        std::size_t select_active_pu(std::unique_lock<pu_mutex_type>& l,
+        std::size_t select_active_pu(
             std::size_t num_thread, bool allow_fallback = false);
 
         // allow to access/manipulate states
@@ -119,13 +119,13 @@ namespace hpx { namespace threads { namespace policies {
 
         ///////////////////////////////////////////////////////////////////////
         // get/set scheduler mode
-        scheduler_mode get_scheduler_mode() const
+        scheduler_mode get_scheduler_mode() const noexcept
         {
             return mode_.data_.load(std::memory_order_relaxed);
         }
 
         // get/set scheduler mode
-        bool has_scheduler_mode(scheduler_mode mode) const
+        bool has_scheduler_mode(scheduler_mode mode) const noexcept
         {
             return (mode_.data_.load(std::memory_order_relaxed) & mode) != 0;
         }
@@ -135,20 +135,20 @@ namespace hpx { namespace threads { namespace policies {
         // by schedulers that do not support certain operations/modes.
         // All other mode set functions should call this one to ensure
         // that flags are always consistent
-        virtual void set_scheduler_mode(scheduler_mode mode);
+        virtual void set_scheduler_mode(scheduler_mode mode) noexcept;
 
         // add a flag to the scheduler mode flags
-        void add_scheduler_mode(scheduler_mode mode);
+        void add_scheduler_mode(scheduler_mode mode) noexcept;
 
         // remove flag from scheduler mode
-        void remove_scheduler_mode(scheduler_mode mode);
+        void remove_scheduler_mode(scheduler_mode mode) noexcept;
 
         // add flag to scheduler mode
         void add_remove_scheduler_mode(
-            scheduler_mode to_add_mode, scheduler_mode to_remove_mode);
+            scheduler_mode to_add_mode, scheduler_mode to_remove_mode) noexcept;
 
         // conditionally add or remove depending on set true/false
-        void update_scheduler_mode(scheduler_mode mode, bool set);
+        void update_scheduler_mode(scheduler_mode mode, bool set) noexcept;
 
         pu_mutex_type& get_pu_mutex(std::size_t num_thread)
         {
@@ -170,8 +170,8 @@ namespace hpx { namespace threads { namespace policies {
             hpx::function<bool(std::size_t, std::size_t)> pred);
 
 #ifdef HPX_HAVE_THREAD_CREATION_AND_CLEANUP_RATES
-        virtual std::uint64_t get_creation_time(bool reset) = 0;
-        virtual std::uint64_t get_cleanup_time(bool reset) = 0;
+        virtual std::uint64_t get_creation_time(bool reset) noexcept = 0;
+        virtual std::uint64_t get_cleanup_time(bool reset) noexcept = 0;
 #endif
 
 #ifdef HPX_HAVE_THREAD_STEALING_COUNTS
@@ -203,9 +203,9 @@ namespace hpx { namespace threads { namespace policies {
         virtual bool is_core_idle(std::size_t num_thread) const = 0;
 
         // count active background threads
-        std::int64_t get_background_thread_count();
-        void increment_background_thread_count();
-        void decrement_background_thread_count();
+        std::int64_t get_background_thread_count() noexcept;
+        void increment_background_thread_count() noexcept;
+        void decrement_background_thread_count() noexcept;
 
         // Enumerate all matching threads
         virtual bool enumerate_threads(
@@ -239,7 +239,7 @@ namespace hpx { namespace threads { namespace policies {
 
         virtual bool wait_or_add_new(std::size_t num_thread, bool running,
             std::int64_t& idle_loop_count, bool enable_stealing,
-            std::size_t& added) = 0;
+            std::size_t& added, thread_id_ref_type* next_thrd = nullptr) = 0;
 
         virtual void on_start_thread(std::size_t num_thread) = 0;
         virtual void on_stop_thread(std::size_t num_thread) = 0;
@@ -293,12 +293,12 @@ namespace hpx { namespace threads { namespace policies {
         using polling_function_ptr = detail::polling_status (*)();
         using polling_work_count_function_ptr = std::size_t (*)();
 
-        static detail::polling_status null_polling_function()
+        static constexpr detail::polling_status null_polling_function() noexcept
         {
             return detail::polling_status::idle;
         }
 
-        static std::size_t null_polling_work_count_function()
+        static constexpr std::size_t null_polling_work_count_function() noexcept
         {
             return 0;
         }

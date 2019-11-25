@@ -266,6 +266,7 @@ namespace hpx { namespace threads {
 
                 // set the default scheduler flags
                 sched->set_scheduler_mode(thread_pool_init.mode_);
+
                 // conditionally set/unset this flag
                 sched->update_scheduler_mode(
                     policies::scheduler_mode::enable_stealing_numa,
@@ -323,6 +324,85 @@ namespace hpx { namespace threads {
                     "is not configured in this build. Please make sure 128bit "
                     "atomics are available.");
 #endif
+                break;
+            }
+
+            case resource::local_workrequesting_fifo:
+            {
+                // set parameters for scheduler and pool instantiation and
+                // perform compatibility checks
+                std::size_t num_high_priority_queues =
+                    hpx::util::get_entry_as<std::size_t>(rtcfg_,
+                        "hpx.thread_queue.high_priority_queues",
+                        thread_pool_init.num_threads_);
+                detail::check_num_high_priority_queues(
+                    thread_pool_init.num_threads_, num_high_priority_queues);
+
+                // instantiate the scheduler
+                using local_sched_type =
+                    hpx::threads::policies::local_workrequesting_scheduler<>;
+
+                local_sched_type::init_parameter_type init(
+                    thread_pool_init.num_threads_,
+                    thread_pool_init.affinity_data_, num_high_priority_queues,
+                    thread_queue_init, "core-local_workrequesting_scheduler");
+
+                std::unique_ptr<local_sched_type> sched(
+                    new local_sched_type(init));
+
+                // set the default scheduler flags
+                sched->set_scheduler_mode(thread_pool_init.mode_);
+
+                // conditionally set/unset this flag
+                sched->update_scheduler_mode(
+                    policies::scheduler_mode::enable_stealing_numa,
+                    !numa_sensitive);
+
+                // instantiate the pool
+                std::unique_ptr<thread_pool_base> pool(
+                    new hpx::threads::detail::scheduled_thread_pool<
+                        local_sched_type>(HPX_MOVE(sched), thread_pool_init));
+                pools_.push_back(HPX_MOVE(pool));
+                break;
+            }
+
+            case resource::local_workrequesting_lifo:
+            {
+                // set parameters for scheduler and pool instantiation and
+                // perform compatibility checks
+                std::size_t num_high_priority_queues =
+                    hpx::util::get_entry_as<std::size_t>(rtcfg_,
+                        "hpx.thread_queue.high_priority_queues",
+                        thread_pool_init.num_threads_);
+                detail::check_num_high_priority_queues(
+                    thread_pool_init.num_threads_, num_high_priority_queues);
+
+                // instantiate the scheduler
+                using local_sched_type =
+                    hpx::threads::policies::local_workrequesting_scheduler<
+                        std::mutex, hpx::threads::policies::lockfree_lifo>;
+
+                local_sched_type::init_parameter_type init(
+                    thread_pool_init.num_threads_,
+                    thread_pool_init.affinity_data_, num_high_priority_queues,
+                    thread_queue_init, "core-local_workrequesting_scheduler");
+
+                std::unique_ptr<local_sched_type> sched(
+                    new local_sched_type(init));
+
+                // set the default scheduler flags
+                sched->set_scheduler_mode(thread_pool_init.mode_);
+
+                // conditionally set/unset this flag
+                sched->update_scheduler_mode(
+                    policies::scheduler_mode::enable_stealing_numa,
+                    !numa_sensitive);
+
+                // instantiate the pool
+                std::unique_ptr<thread_pool_base> pool(
+                    new hpx::threads::detail::scheduled_thread_pool<
+                        local_sched_type>(HPX_MOVE(sched), thread_pool_init));
+                pools_.push_back(HPX_MOVE(pool));
                 break;
             }
 
@@ -784,7 +864,8 @@ namespace hpx { namespace threads {
     }
 
 #ifdef HPX_HAVE_THREAD_QUEUE_WAITTIME
-    std::int64_t threadmanager::get_average_thread_wait_time(bool reset)
+    std::int64_t threadmanager::get_average_thread_wait_time(
+        bool reset) noexcept
     {
         std::int64_t result = 0;
         for (auto const& pool_iter : pools_)
@@ -867,7 +948,7 @@ namespace hpx { namespace threads {
 #endif    // HPX_HAVE_BACKGROUND_THREAD_COUNTERS
 
 #ifdef HPX_HAVE_THREAD_IDLE_RATES
-    std::int64_t threadmanager::avg_idle_rate(bool reset)
+    std::int64_t threadmanager::avg_idle_rate(bool reset) noexcept
     {
         std::int64_t result = 0;
         for (auto const& pool_iter : pools_)
@@ -876,7 +957,7 @@ namespace hpx { namespace threads {
     }
 
 #ifdef HPX_HAVE_THREAD_CREATION_AND_CLEANUP_RATES
-    std::int64_t threadmanager::avg_creation_idle_rate(bool reset)
+    std::int64_t threadmanager::avg_creation_idle_rate(bool reset) noexcept
     {
         std::int64_t result = 0;
         for (auto const& pool_iter : pools_)
@@ -884,7 +965,7 @@ namespace hpx { namespace threads {
         return result;
     }
 
-    std::int64_t threadmanager::avg_cleanup_idle_rate(bool reset)
+    std::int64_t threadmanager::avg_cleanup_idle_rate(bool reset) noexcept
     {
         std::int64_t result = 0;
         for (auto const& pool_iter : pools_)
@@ -895,7 +976,7 @@ namespace hpx { namespace threads {
 #endif
 
 #ifdef HPX_HAVE_THREAD_CUMULATIVE_COUNTS
-    std::int64_t threadmanager::get_executed_threads(bool reset)
+    std::int64_t threadmanager::get_executed_threads(bool reset) noexcept
     {
         std::int64_t result = 0;
         for (auto const& pool_iter : pools_)
@@ -903,7 +984,7 @@ namespace hpx { namespace threads {
         return result;
     }
 
-    std::int64_t threadmanager::get_executed_thread_phases(bool reset)
+    std::int64_t threadmanager::get_executed_thread_phases(bool reset) noexcept
     {
         std::int64_t result = 0;
         for (auto const& pool_iter : pools_)

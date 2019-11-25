@@ -18,12 +18,13 @@ namespace hpx { namespace threads {
     ////////////////////////////////////////////////////////////////////////////
     struct background_work_duration_counter
     {
-        background_work_duration_counter(std::int64_t& background_exec_time)
+        background_work_duration_counter(
+            std::int64_t& background_exec_time) noexcept
           : background_exec_time_(background_exec_time)
         {
         }
 
-        void collect_background_exec_time(std::int64_t timestamp)
+        void collect_background_exec_time(std::int64_t timestamp) noexcept
         {
             if (background_exec_time_ != -1)
             {
@@ -38,7 +39,7 @@ namespace hpx { namespace threads {
     struct background_exec_time_wrapper
     {
         background_exec_time_wrapper(
-            background_work_duration_counter& background_work_duration)
+            background_work_duration_counter& background_work_duration) noexcept
           : timestamp_(background_work_duration.background_exec_time_ != -1 ?
                     util::hardware::timestamp() :
                     -1)

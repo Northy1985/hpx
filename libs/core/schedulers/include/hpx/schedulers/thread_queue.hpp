@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2019 Hartmut Kaiser
+//  Copyright (c) 2007-2022 Hartmut Kaiser
 //  Copyright (c) 2011      Bryce Lelbach
 //
 //  SPDX-License-Identifier: BSL-1.0
@@ -447,11 +447,10 @@ namespace hpx { namespace threads { namespace policies {
             return cleanup_terminated_locked(false);
         }
 
-        thread_queue(std::size_t queue_num = std::size_t(-1),
-            thread_queue_init_parameters parameters = {})
+        thread_queue(thread_queue_init_parameters parameters = {})
           : parameters_(parameters)
           , thread_map_count_(0)
-          , work_items_(128, queue_num)
+          , work_items_(128)
 #ifdef HPX_HAVE_THREAD_QUEUE_WAITTIME
           , work_items_wait_(0)
           , work_items_wait_count_(0)
@@ -509,12 +508,12 @@ namespace hpx { namespace threads { namespace policies {
         }
 
 #ifdef HPX_HAVE_THREAD_CREATION_AND_CLEANUP_RATES
-        std::uint64_t get_creation_time(bool reset)
+        std::uint64_t get_creation_time(bool reset) noexcept
         {
             return util::get_and_reset_value(add_new_time_, reset);
         }
 
-        std::uint64_t get_cleanup_time(bool reset)
+        std::uint64_t get_cleanup_time(bool reset) noexcept
         {
             return util::get_and_reset_value(cleanup_terminated_time_, reset);
         }
@@ -523,7 +522,7 @@ namespace hpx { namespace threads { namespace policies {
         ///////////////////////////////////////////////////////////////////////
         // This returns the current length of the queues (work items and new items)
         std::int64_t get_queue_length(
-            std::memory_order order = std::memory_order_acquire) const
+            std::memory_order order = std::memory_order_acquire) const noexcept
         {
             return work_items_count_.data_.load(order) +
                 new_tasks_count_.data_.load(order);
@@ -531,20 +530,20 @@ namespace hpx { namespace threads { namespace policies {
 
         // This returns the current length of the pending queue
         std::int64_t get_pending_queue_length(
-            std::memory_order order = std::memory_order_acquire) const
+            std::memory_order order = std::memory_order_acquire) const noexcept
         {
             return work_items_count_.data_.load(order);
         }
 
         // This returns the current length of the staged queue
         std::int64_t get_staged_queue_length(
-            std::memory_order order = std::memory_order_acquire) const
+            std::memory_order order = std::memory_order_acquire) const noexcept
         {
             return new_tasks_count_.data_.load(order);
         }
 
 #ifdef HPX_HAVE_THREAD_QUEUE_WAITTIME
-        std::uint64_t get_average_task_wait_time() const
+        std::uint64_t get_average_task_wait_time() const noexcept
         {
             std::uint64_t count = new_tasks_wait_count_;
             if (count == 0)
@@ -552,7 +551,7 @@ namespace hpx { namespace threads { namespace policies {
             return new_tasks_wait_ / count;
         }
 
-        std::uint64_t get_average_thread_wait_time() const
+        std::uint64_t get_average_thread_wait_time() const noexcept
         {
             std::uint64_t count = work_items_wait_count_;
             if (count == 0)
@@ -562,85 +561,88 @@ namespace hpx { namespace threads { namespace policies {
 #endif
 
 #ifdef HPX_HAVE_THREAD_STEALING_COUNTS
-        std::int64_t get_num_pending_misses(bool reset)
+        std::int64_t get_num_pending_misses(bool reset) noexcept
         {
             return util::get_and_reset_value(pending_misses_, reset);
         }
 
-        void increment_num_pending_misses(std::size_t num = 1)
+        void increment_num_pending_misses(std::size_t num = 1) noexcept
         {
             pending_misses_.fetch_add(num, std::memory_order_relaxed);
         }
 
-        std::int64_t get_num_pending_accesses(bool reset)
+        std::int64_t get_num_pending_accesses(bool reset) noexcept
         {
             return util::get_and_reset_value(pending_accesses_, reset);
         }
 
-        void increment_num_pending_accesses(std::size_t num = 1)
+        void increment_num_pending_accesses(std::size_t num = 1) noexcept
         {
             pending_accesses_.fetch_add(num, std::memory_order_relaxed);
         }
 
-        std::int64_t get_num_stolen_from_pending(bool reset)
+        std::int64_t get_num_stolen_from_pending(bool reset) noexcept
         {
             return util::get_and_reset_value(stolen_from_pending_, reset);
         }
 
-        void increment_num_stolen_from_pending(std::size_t num = 1)
+        void increment_num_stolen_from_pending(std::size_t num = 1) noexcept
         {
             stolen_from_pending_.fetch_add(num, std::memory_order_relaxed);
         }
 
-        std::int64_t get_num_stolen_from_staged(bool reset)
+        std::int64_t get_num_stolen_from_staged(bool reset) noexcept
         {
             return util::get_and_reset_value(stolen_from_staged_, reset);
         }
 
-        void increment_num_stolen_from_staged(std::size_t num = 1)
+        void increment_num_stolen_from_staged(std::size_t num = 1) noexcept
         {
             stolen_from_staged_.fetch_add(num, std::memory_order_relaxed);
         }
 
-        std::int64_t get_num_stolen_to_pending(bool reset)
+        std::int64_t get_num_stolen_to_pending(bool reset) noexcept
         {
             return util::get_and_reset_value(stolen_to_pending_, reset);
         }
 
-        void increment_num_stolen_to_pending(std::size_t num = 1)
+        void increment_num_stolen_to_pending(std::size_t num = 1) noexcept
         {
             stolen_to_pending_.fetch_add(num, std::memory_order_relaxed);
         }
 
-        std::int64_t get_num_stolen_to_staged(bool reset)
+        std::int64_t get_num_stolen_to_staged(bool reset) noexcept
         {
             return util::get_and_reset_value(stolen_to_staged_, reset);
         }
 
-        void increment_num_stolen_to_staged(std::size_t num = 1)
+        void increment_num_stolen_to_staged(std::size_t num = 1) noexcept
         {
             stolen_to_staged_.fetch_add(num, std::memory_order_relaxed);
         }
 #else
-        constexpr void increment_num_pending_misses(std::size_t /* num */ = 1)
+        constexpr void increment_num_pending_misses(
+            std::size_t /* num */ = 1) noexcept
         {
         }
-        constexpr void increment_num_pending_accesses(std::size_t /* num */ = 1)
+        constexpr void increment_num_pending_accesses(
+            std::size_t /* num */ = 1) noexcept
         {
         }
         constexpr void increment_num_stolen_from_pending(
-            std::size_t /* num */ = 1)
+            std::size_t /* num */ = 1) noexcept
         {
         }
         constexpr void increment_num_stolen_from_staged(
-            std::size_t /* num */ = 1)
+            std::size_t /* num */ = 1) noexcept
         {
         }
         constexpr void increment_num_stolen_to_pending(
-            std::size_t /* num */ = 1)
+            std::size_t /* num */ = 1) noexcept
         {
         }
-        constexpr void increment_num_stolen_to_staged(std::size_t /* num */ = 1)
+        constexpr void increment_num_stolen_to_staged(
+            std::size_t /* num */ = 1) noexcept
         {
         }
 #endif

@@ -1604,7 +1604,7 @@ namespace hpx { namespace threads { namespace detail {
 #if defined(HPX_HAVE_THREAD_CREATION_AND_CLEANUP_RATES)
     template <typename Scheduler>
     std::int64_t scheduled_thread_pool<Scheduler>::avg_creation_idle_rate(
-        std::size_t, bool reset)
+        std::size_t, bool reset) noexcept
     {
         double const creation_total =
             static_cast<double>(sched_->Scheduler::get_creation_time(reset));
@@ -1651,7 +1651,7 @@ namespace hpx { namespace threads { namespace detail {
 
     template <typename Scheduler>
     std::int64_t scheduled_thread_pool<Scheduler>::avg_cleanup_idle_rate(
-        std::size_t, bool reset)
+        std::size_t, bool reset) noexcept
     {
         double const cleanup_total =
             static_cast<double>(sched_->Scheduler::get_cleanup_time(reset));
@@ -1698,7 +1698,8 @@ namespace hpx { namespace threads { namespace detail {
 #endif    // HPX_HAVE_THREAD_CREATION_AND_CLEANUP_RATES
 
     template <typename Scheduler>
-    std::int64_t scheduled_thread_pool<Scheduler>::avg_idle_rate_all(bool reset)
+    std::int64_t scheduled_thread_pool<Scheduler>::avg_idle_rate_all(
+        bool reset) noexcept
     {
         std::int64_t exec_total =
             accumulate_projected(counter_data_.begin(), counter_data_.end(),
@@ -1741,7 +1742,7 @@ namespace hpx { namespace threads { namespace detail {
 
     template <typename Scheduler>
     std::int64_t scheduled_thread_pool<Scheduler>::avg_idle_rate(
-        std::size_t num, bool reset)
+        std::size_t num, bool reset) noexcept
     {
         if (num == std::size_t(-1))
             return avg_idle_rate_all(reset);

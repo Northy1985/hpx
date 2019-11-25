@@ -363,6 +363,7 @@ namespace hpx { namespace local { namespace detail {
                 ("hpx:queuing", value<std::string>(),
                   "the queue scheduling policy to use, options are "
                   "'local', 'local-priority-fifo','local-priority-lifo', "
+                  "'local-workrequesting-fifo', 'local-workrequesting-lifo' "
                   "'abp-priority-fifo', 'abp-priority-lifo', 'static', and "
                   "'static-priority' (default: 'local-priority'; "
                   "all option values can be abbreviated)")

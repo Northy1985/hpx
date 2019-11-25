@@ -46,11 +46,11 @@ namespace hpx { namespace threads {
         {
         }
 
-        std::size_t index() const
+        std::size_t index() const noexcept
         {
             return index_;
         };
-        std::string const& name() const
+        std::string const& name() const noexcept
         {
             return name_;
         }
@@ -207,7 +207,7 @@ namespace hpx { namespace threads {
         {
             return id_.name();
         }
-        std::size_t get_thread_offset() const
+        std::size_t get_thread_offset() const noexcept
         {
             return thread_offset_;
         }
@@ -309,23 +309,23 @@ namespace hpx { namespace threads {
 #endif    // HPX_HAVE_BACKGROUND_THREAD_COUNTERS
 
 #if defined(HPX_HAVE_THREAD_IDLE_RATES)
-        virtual std::int64_t avg_idle_rate_all(bool /*reset*/)
+        virtual std::int64_t avg_idle_rate_all(bool /*reset*/) noexcept
         {
             return 0;
         }
-        virtual std::int64_t avg_idle_rate(std::size_t, bool)
+        virtual std::int64_t avg_idle_rate(std::size_t, bool) noexcept
         {
             return 0;
         }
 
 #if defined(HPX_HAVE_THREAD_CREATION_AND_CLEANUP_RATES)
         virtual std::int64_t avg_creation_idle_rate(
-            std::size_t /*thread_num*/, bool /*reset*/)
+            std::size_t /*thread_num*/, bool /*reset*/) noexcept
         {
             return 0;
         }
         virtual std::int64_t avg_cleanup_idle_rate(
-            std::size_t /*thread_num*/, bool /*reset*/)
+            std::size_t /*thread_num*/, bool /*reset*/) noexcept
         {
             return 0;
         }

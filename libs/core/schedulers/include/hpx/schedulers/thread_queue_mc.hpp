@@ -137,7 +137,7 @@ namespace hpx { namespace threads { namespace policies {
         }
 
     public:
-        explicit thread_queue_mc(const thread_queue_init_parameters& parameters,
+        explicit thread_queue_mc(thread_queue_init_parameters const& parameters,
             std::size_t queue_num = std::size_t(-1))
           : parameters_(parameters)
           , queue_index_(static_cast<int>(queue_num))
@@ -163,7 +163,7 @@ namespace hpx { namespace threads { namespace policies {
 
         // ----------------------------------------------------------------
         // This returns the current length of the queues (work items and new items)
-        std::int64_t get_queue_length() const
+        std::int64_t get_queue_length() const noexcept
         {
             return work_items_count_.data_.load(std::memory_order_relaxed) +
                 new_tasks_count_.data_.load(std::memory_order_relaxed);
@@ -171,7 +171,7 @@ namespace hpx { namespace threads { namespace policies {
 
         // ----------------------------------------------------------------
         // This returns the current length of the pending queue
-        std::int64_t get_queue_length_pending() const
+        std::int64_t get_queue_length_pending() const noexcept
         {
             return work_items_count_.data_.load(std::memory_order_relaxed);
         }
@@ -179,7 +179,7 @@ namespace hpx { namespace threads { namespace policies {
         // ----------------------------------------------------------------
         // This returns the current length of the staged queue
         std::int64_t get_queue_length_staged(
-            std::memory_order order = std::memory_order_relaxed) const
+            std::memory_order order = std::memory_order_relaxed) const noexcept
         {
             return new_tasks_count_.data_.load(order);
         }

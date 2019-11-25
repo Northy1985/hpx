@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2017 Hartmut Kaiser
+//  Copyright (c) 2007-202 Hartmut Kaiser
 //  Copyright (c) 2011      Bryce Lelbach
 //
 //  SPDX-License-Identifier: BSL-1.0
@@ -68,7 +68,7 @@ namespace hpx { namespace threads { namespace policies {
             return "static_queue_scheduler";
         }
 
-        void set_scheduler_mode(scheduler_mode mode) override
+        void set_scheduler_mode(scheduler_mode mode) noexcept override
         {
             // this scheduler does not support stealing or numa stealing
             mode = scheduler_mode(mode & ~scheduler_mode::enable_stealing);
@@ -105,7 +105,7 @@ namespace hpx { namespace threads { namespace policies {
         /// has to be terminated (i.e. no more work has to be done).
         bool wait_or_add_new(std::size_t num_thread, bool running,
             std::int64_t& idle_loop_count, bool /*enable_stealing*/,
-            std::size_t& added) override
+            std::size_t& added, thread_id_ref_type* = nullptr) override
         {
             HPX_ASSERT(num_thread < this->queues_.size());
 

@@ -1,4 +1,4 @@
-//  Copyright (c) 2019 Hartmut Kaiser
+//  Copyright (c) 2019-2022 Hartmut Kaiser
 //
 //  SPDX-License-Identifier: BSL-1.0
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -59,12 +59,6 @@ namespace hpx { namespace lcos { namespace local {
         {
             HPX_ASSERT(size != 0);
 
-            // invoke constructors for allocated buffer
-            for (std::size_t i = 0; i != size_; ++i)
-            {
-                new (&buffer_[i]) T();
-            }
-
             head_.data_.store(0, std::memory_order_relaxed);
             tail_.data_.tail_.store(0, std::memory_order_relaxed);
         }
@@ -104,12 +98,6 @@ namespace hpx { namespace lcos { namespace local {
 
         ~base_channel_mpsc()
         {
-            // invoke destructors for allocated buffer
-            for (std::size_t i = 0; i != size_; ++i)
-            {
-                (&buffer_[i])->~T();
-            }
-
             if (!closed_.load(std::memory_order_relaxed))
             {
                 close();
@@ -145,7 +133,11 @@ namespace hpx { namespace lcos { namespace local {
             return true;
         }
 
-        bool set(T&& t) noexcept
+        // clang-format off
+        bool set(T&& t) noexcept(
+            noexcept(std::declval<std::unique_lock<mutex_type>&>().lock()) &&
+            noexcept(std::declval<std::unique_lock<mutex_type>&>().unlock()))
+        // clang-format on
         {
             if (closed_.load(std::memory_order_relaxed))
             {
@@ -184,7 +176,7 @@ namespace hpx { namespace lcos { namespace local {
             return 0;
         }
 
-        std::size_t capacity() const
+        constexpr std::size_t capacity() const noexcept
         {
             return size_ - 1;
         }

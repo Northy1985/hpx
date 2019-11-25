@@ -7,6 +7,7 @@
 #include <hpx/config.hpp>
 #include <hpx/schedulers/local_priority_queue_scheduler.hpp>
 #include <hpx/schedulers/local_queue_scheduler.hpp>
+#include <hpx/schedulers/local_workrequesting_scheduler.hpp>
 #include <hpx/schedulers/shared_priority_queue_scheduler.hpp>
 #include <hpx/schedulers/static_priority_queue_scheduler.hpp>
 #include <hpx/schedulers/static_queue_scheduler.hpp>
@@ -61,3 +62,14 @@ template class HPX_CORE_EXPORT
     hpx::threads::policies::shared_priority_queue_scheduler<>;
 template class HPX_CORE_EXPORT hpx::threads::detail::scheduled_thread_pool<
     hpx::threads::policies::shared_priority_queue_scheduler<>>;
+
+template class HPX_CORE_EXPORT
+    hpx::threads::policies::local_workrequesting_scheduler<>;
+template class HPX_CORE_EXPORT hpx::threads::detail::scheduled_thread_pool<
+    hpx::threads::policies::local_workrequesting_scheduler<>>;
+template class HPX_CORE_EXPORT
+    hpx::threads::policies::local_workrequesting_scheduler<std::mutex,
+        hpx::threads::policies::lockfree_lifo>;
+template class HPX_CORE_EXPORT hpx::threads::detail::scheduled_thread_pool<
+    hpx::threads::policies::local_workrequesting_scheduler<std::mutex,
+        hpx::threads::policies::lockfree_lifo>>;
